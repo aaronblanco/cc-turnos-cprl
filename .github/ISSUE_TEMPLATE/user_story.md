@@ -1,25 +1,25 @@
-## Resumen
-Describe de forma breve qué cambia este PR y por qué.
+---
+name: User Story
+about: Historia de usuario para el backlog del proyecto
+labels: ["user-story"]
+---
 
-## Issue relacionada
-Closes #<numero-issue>
+## Historia de usuario
+Como **[rol]**, quiero **[acción]**, para **[beneficio]**.
 
-## Tipo de cambio
-- [ ] feat
-- [ ] fix
-- [ ] docs
-- [ ] refactor
-- [ ] test
-- [ ] chore
+## Contexto
+Describe brevemente el escenario funcional y su valor.
 
-## Checklist de revisión
-- [ ] El cambio está alineado con el objetivo del hito actual
-- [ ] No introduce cambios fuera de alcance
-- [ ] Se actualizó documentación relevante
-- [ ] Se verificaron criterios de aceptación de la Issue
+## Criterios de aceptación
+- [ ] Criterio 1 (medible)
+- [ ] Criterio 2 (medible)
+- [ ] Criterio 3 (medible)
 
-## Evidencias
-Adjunta enlaces/capturas solo cuando aplique.
+## Checklist técnico
+- [ ] Diseño/ajuste de API o contrato
+- [ ] Implementación
+- [ ] Pruebas
+- [ ] Documentación
 
-## Riesgos y pendientes
-Indica riesgos, deuda técnica o validaciones pendientes.
+## Dependencias / notas
+Indica bloqueos, decisiones pendientes o enlaces relacionados.

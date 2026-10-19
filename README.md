@@ -118,7 +118,6 @@ Nota: la API REST es un diseño inicial y puede evolucionar según necesidades d
 
 ## 8) Backlog inicial propuesto (para GitHub Issues/Projects)
 
-> Propuesta documental. **No implica** que Issues, etiquetas, milestones o Projects estén ya creados en GitHub.
 
 ### Hito 1
 1. **US-01 Definición de dominio y alcance**  
