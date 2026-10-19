@@ -1,0 +1,35 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+.pnpm-store/
+.yarn/
+
+# Python utilities
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs and temp
+*.log
+tmp/
+.env
+.env.*
+
+# Terraform / IaC (future)
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Docker (future)
+*.pid
