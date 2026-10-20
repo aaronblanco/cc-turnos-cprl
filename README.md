@@ -118,47 +118,8 @@ Nota: la API REST es un diseño inicial y puede evolucionar según necesidades d
 
 ## 8) Backlog inicial propuesto (para GitHub Issues/Projects)
 
-
-### Hito 1
-1. **US-01 Definición de dominio y alcance**  
-   Como responsable del proyecto, quiero documentar problema, objetivos y casos de uso, para fijar alcance evaluable.  
-   **Criterios:** README incluye problema, objetivos y 3 casos de uso.
-
-2. **US-02 Diseño arquitectónico cloud-native**  
-   Como responsable técnico, quiero un diagrama de arquitectura con componentes y protocolos, para guiar implementación posterior.  
-   **Criterios:** diagrama Mermaid y descripción coherente de componentes.
-
-3. **US-03 Marco NIST aplicado**  
-   Como responsable del proyecto, quiero justificar SP 800-145 y mapear SP 500-292, para encuadrar formalmente el diseño cloud.  
-   **Criterios:** 5 características y 5 actores explicados con impacto económico.
-
-4. **US-04 Plantillas y flujo GitHub**  
-   Como desarrollador, quiero plantillas de Issue/PR y normas de ramas/commits, para estandarizar el trabajo.  
-   **Criterios:** `.gitignore`, plantilla de user-story y PR template presentes.
-
-### Hito 2
-5. **US-05 Alta de turnos en recepción**  
-   Como recepcionista, quiero registrar turnos, para iniciar cola de atención.  
-   **Criterios:** endpoint de creación y validaciones mínimas.
-
-6. **US-06 Consulta de cola para operadores**  
-   Como operador, quiero ver cola ordenada, para llamar pacientes con criterio claro.  
-   **Criterios:** endpoint de consulta y estados básicos definidos.
-
-### Hito 3
-7. **US-07 Infraestructura declarativa**  
-   Como operador del sistema, quiero aprovisionamiento IaC, para reproducibilidad y control de cambios.  
-   **Criterios:** recursos mínimos definidos como código y trazables.
-
-### Hito 4
-8. **US-08 Despliegue continuo seguro**  
-   Como responsable DevOps, quiero pipeline CD con controles de seguridad, para reducir riesgo en entregas.  
-   **Criterios:** política de despliegue y validaciones automáticas.
-
-### Hito 5
-9. **US-09 Observabilidad y métricas de servicio**  
-   Como responsable de operación, quiero métricas, logs y trazas, para medir calidad y coste.  
-   **Criterios:** definición de indicadores y umbrales de alerta.
+Enlace al backlog inicial:
+https://github.com/users/aaronblanco/projects/4
 
 ## 9) Referencias
 
