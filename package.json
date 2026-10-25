@@ -1,0 +1,18 @@
+{
+  "name": "cc-turnos-cprl",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Gestion local de turnos para un centro sanitario",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:auth\" \"npm run dev:queue\" \"npm run dev:calls\" \"npm run dev:web\"",
+    "dev:auth": "node services/auth/src/server.js",
+    "dev:queue": "node services/queue/src/server.js",
+    "dev:calls": "node services/calls/src/server.js",
+    "dev:web": "vite --config frontend/vite.config.js",
+    "test": "node --test test/*.test.js",
+    "build": "vite build --config frontend/vite.config.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": { "bcryptjs": "^3.0.2", "cors": "^2.8.5", "express": "^5.1.0", "jsonwebtoken": "^9.0.2", "react": "^19.1.0", "react-dom": "^19.1.0" },
+  "devDependencies": { "@vitejs/plugin-react": "^4.4.1", "concurrently": "^9.1.2", "vite": "^6.3.5", "vitest": "^3.1.2" }
+}

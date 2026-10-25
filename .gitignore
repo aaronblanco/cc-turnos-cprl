@@ -34,3 +34,6 @@ crash.log
 
 # Docker (future)
 *.pid
+
+# Datos runtime locales
+services/*/data/*.json
