@@ -10,6 +10,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
     networks:
       - backend
+    # Compose usa el healthcheck como criterio real de disponibilidad del servicio.
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:4001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 10s
@@ -24,6 +25,7 @@ services:
       QUEUE_PORT: 4002
       JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
     volumes:
+      # El volumen conserva los turnos aunque se recree el contenedor.
       - queue-data:/app/services/queue/data
     networks:
       - backend
@@ -43,6 +45,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
     depends_on:
       queue:
+        # Calls no arranca hasta que queue pueda responder su endpoint de salud.
         condition: service_healthy
     networks:
       - backend
@@ -67,11 +70,13 @@ services:
         condition: service_healthy
     networks:
       - frontend
+      # Es la red compartida para que el frontend pueda alcanzar las APIs.
       - backend
 
 networks:
   frontend:
   backend:
+    # Impide el acceso directo de contenedores externos a los servicios internos.
     internal: true
 
 volumes:

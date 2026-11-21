@@ -1,3 +1,4 @@
+# Elimina herramientas y dependencias de desarrollo en la fase final.
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
@@ -10,6 +11,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY package*.json ./
 COPY services/shared ./services/shared
 COPY services/auth ./services/auth
+# Evita que la aplicación se ejecute con privilegios del usuario root.
 USER node
 EXPOSE 4001
 CMD ["node", "services/auth/src/server.js"]

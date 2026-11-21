@@ -2,7 +2,7 @@
 
 Proyecto de **Cloud Computing (MUII-UGR)** para modernizar la gestión de turnos del centro de prevención de riesgos laborales con enfoque cloud-native.
 
-> Estado actual: ** Definición y preparación de Hito 1**.  
+> Estado actual: ** Construcción hito 2**.  
 
 
 ## 1) Problema, objetivos y casos de uso
@@ -183,3 +183,9 @@ El workflow [.github/workflows/ci.yml](.github/workflows/ci.yml):
 - construye el entorno completo con Compose;
 - ejecuta una prueba integrada real de login, creación de turno, llamada y pantalla pública;
 - publica, solo en `push` a `main`, las cuatro imágenes en GHCR con el SHA del commit y `latest`.
+
+### Actualización de seguridad de Nginx
+
+El frontend usa `nginx:1.30.7-alpine`, parcheado frente a las vulnerabilidades HTTP/2
+CVE-2026-123007 y CVE-2026-123633. Se ejecuta con el usuario `nginx` y reemplaza la
+configuración estándar por una que escucha únicamente en el puerto interno `8080`.
