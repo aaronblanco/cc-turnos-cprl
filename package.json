@@ -10,6 +10,7 @@
     "dev:calls": "node services/calls/src/server.js",
     "dev:web": "vite --config frontend/vite.config.js",
     "test": "node --test test/*.test.js",
+    "test:integration": "node test/integration.check.js",
     "build": "vite build --config frontend/vite.config.js"
   },
   "engines": { "node": ">=20" },

@@ -25,6 +25,7 @@ venv/
 tmp/
 .env
 .env.*
+!.env.example
 
 # Terraform / IaC (future)
 .terraform/

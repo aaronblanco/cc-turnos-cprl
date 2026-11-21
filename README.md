@@ -129,3 +129,57 @@ https://github.com/users/aaronblanco/projects/4
 - Arquitectura de referencia microfrontend (Junta de Andalucía):  
   https://desarrollo.juntadeandalucia.es/recursos/reglas-pautas/arquitectura-referencia-microfrontend
 - GitHub copilot: Formateo y extensión de README.md, diagramas Mermaid y tablas de backlog.
+
+## 10) Hito 2: entorno Cloud Native local y CI
+
+El Hito 2 empaqueta la aplicación completa como contenedores Docker y permite levantar el
+entorno local mediante un único comando.
+
+### Contenedores
+
+- `services/auth/Dockerfile`: servicio de autenticación.
+- `services/queue/Dockerfile`: servicio de cola y persistencia.
+- `services/calls/Dockerfile`: servicio de llamadas.
+- `frontend/Dockerfile`: frontend React compilado y servido por Nginx.
+
+Las imágenes de producción usan compilaciones multi-stage, dependencias reproducibles,
+imágenes base Alpine y usuarios no root. El servicio de cola persiste sus datos en un
+volumen Docker gestionado.
+
+### Inicio local
+
+Copiar el archivo de ejemplo y, opcionalmente, cambiar el secreto compartido:
+
+```powers
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+La aplicación queda disponible en `http://localhost:8080`. La ruta
+`http://localhost:8080/pantalla` muestra la pantalla pública.
+
+Comandos útiles:
+
+```powers
+npm test
+npm run test:integration
+npm run build
+docker compose ps
+docker compose logs -f
+docker compose down
+docker compose down -v
+```
+
+El último comando elimina también los datos persistentes de cola.
+
+### Integración Continua
+
+El workflow [.github/workflows/ci.yml](.github/workflows/ci.yml):
+
+- se ejecuta en `push` y `pull_request` sobre `main`;
+- valida los Dockerfiles con Hadolint;
+- instala dependencias con `npm ci`;
+- ejecuta las pruebas unitarias y la compilación;
+- construye el entorno completo con Compose;
+- ejecuta una prueba integrada real de login, creación de turno, llamada y pantalla pública;
+- publica, solo en `push` a `main`, las cuatro imágenes en GHCR con el SHA del commit y `latest`.

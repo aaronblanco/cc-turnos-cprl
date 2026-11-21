@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
-const API = { auth: 'http://localhost:4001', queue: 'http://localhost:4002', calls: 'http://localhost:4003' };
+const API = { auth: '', queue: '', calls: '' };
 const roles = { recepcion: 'Recepción', operador: 'Operador', admin: 'Administración' };
 async function request(url, options = {}) { const response = await fetch(url, options); const body = await response.json(); if (!response.ok) throw new Error(body.message || 'No se pudo completar la operación'); return body; }
 function Layout({ user, onLogout, children }) { return <><header className="topbar"><div className="brand"><span className="brand-mark">JA</span><div><strong>Gestión de turnos</strong><small>Centro de prevención</small></div></div><div className="top-actions"><span>{user ? `${user.name} · ${roles[user.role]}` : 'Pantalla pública'}</span>{user && <button className="button ghost" onClick={onLogout}>Cerrar sesión</button>}</div></header>{children}</>; }

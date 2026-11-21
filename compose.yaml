@@ -1,0 +1,78 @@
+name: cc-turnos-cprl
+
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    environment:
+      AUTH_PORT: 4001
+      JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  queue:
+    build:
+      context: .
+      dockerfile: services/queue/Dockerfile
+    environment:
+      QUEUE_PORT: 4002
+      JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
+    volumes:
+      - queue-data:/app/services/queue/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4002/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  calls:
+    build:
+      context: .
+      dockerfile: services/calls/Dockerfile
+    environment:
+      CALLS_PORT: 4003
+      QUEUE_URL: http://queue:4002
+      JWT_SECRET: ${JWT_SECRET:-cc-turnos-local-secret-change-me}
+    depends_on:
+      queue:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4003/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      auth:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+      calls:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+networks:
+  frontend:
+  backend:
+    internal: true
+
+volumes:
+  queue-data:
