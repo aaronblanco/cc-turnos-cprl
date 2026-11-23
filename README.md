@@ -1,191 +1,131 @@
 # cc-turnos-cprl
 
-Proyecto de **Cloud Computing (MUII-UGR)** para modernizar la gestión de turnos del centro de prevención de riesgos laborales con enfoque cloud-native.
+Aplicacion de gestion de turnos para un centro sanitario. Permite crear e imprimir tickets desde recepcion, gestionar llamadas desde un puesto de operador y mostrar las llamadas publicas sin datos personales.
 
-> Estado actual: ** Construcción hito 2**.  
+## Resumen actual
 
+La aplicacion utiliza React/Vite para la interfaz y tres servicios Node.js/Express con responsabilidades separadas:
 
-## 1) Problema, objetivos y casos de uso
+- **Autenticacion y usuarios:** inicio de sesion, identidad y roles.
+- **Gestion de turnos:** colas, codigos, persistencia y estados.
+- **Atencion y llamadas:** asignacion de turnos, llamadas, ausencias y avisos publicos.
 
-### Problema
-La operativa de turnos basada en scripts heredados dificulta trazabilidad, escalabilidad y evolución técnica. Es una aplicación de Ubuntu 16.04 en php con base de datos PostgreSQL antigua, sin separación de responsabilidades ni control de versiones.
-### Objetivos
-- Definir una arquitectura cloud-native modular y evolutiva.
-- Establecer un flujo claro para recepción, operadores y pantalla pública.
-- Preparar la base de trabajo en GitHub (ramas, plantillas y backlog) para siguientes hitos.
-
-### Casos de uso principales
-1. **Recepción** registra paciente y genera turno que se imprime en la impresora.
-2. **Operador** consulta cola y llama al siguiente turno.
-3. **Pantalla pública** muestra llamadas activas y estado de cola sin datos sensibles.
-
-## 2) Arquitectura propuesta (diseño)
-
-Arquitectura objetivo (propuesta, no implementada):
+Se sigue un patron **Shell + modulos funcionales**: el Shell aporta navegacion y experiencia comun, mientras recepcion, operador y pantalla publica mantienen responsabilidades separadas. La comunicacion se realiza mediante APIs REST y SSE. No se utiliza Module Federation ni una infraestructura distribuida mientras no resulte necesaria.
 
 ```mermaid
 flowchart LR
-    R[Recepción UI] -->|HTTPS/REST JSON| API[API de Turnos]
-    O[Operador UI] -->|HTTPS/REST JSON| API
-    P[Pantalla pública UI] -->|HTTPS/REST JSON o SSE| API
-
-    API -->|SQL/TCP| DB[(Base de datos de turnos)]
-    API -->|Cache protocol| C[(Caché de cola)]
-    API -->|HTTPS/OIDC| IDP[Servicio de identidad]
-
-    subgraph Cloud_Provider[Proveedor Cloud]
-      API
-      DB
-      C
-      IDP
-    end
+  W[Shell React / Vite] --> A[auth-service :4001]
+  W --> Q[queue-service :4002]
+  W --> C[calls-service :4003]
+  C -->|REST| Q
+  C -->|SSE| P[Pantalla publica /pantalla]
+  Q --> D[(JSON local de colas)]
 ```
 
-### Componentes y comunicaciones
-- **UIs (recepción/operador/pública):** clientes web.
-- **API de turnos:** lógica de negocio y estados del turno.
-- **Base de datos:** persistencia transaccional.
-- **Caché:** lectura rápida de colas/llamadas.
-- **Identidad:** autenticación/autorización para recepción y operadores.
+## Requisitos y ejecucion
 
-## 3) Justificación NIST SP 800-145 (5 características esenciales)
+- Node.js 20 o superior y npm para ejecutar los procesos directamente.
+- Docker con Compose para levantar el entorno completo en contenedores.
 
-Fuente oficial: **NIST SP 800-145** (*The NIST Definition of Cloud Computing*):  
-- https://doi.org/10.6028/NIST.SP.800-145  
-- https://csrc.nist.gov/publications/detail/sp/800-145/final
+### Ejecucion directa
 
-Aplicación al proyecto (**objetivo de diseño**, no estado actual):
+```bash
+npm ci
+npm run dev
+```
 
-1. **On-demand self-service**: aprovisionar entornos (dev/test/prod) sin gestión manual del proveedor.
-2. **Broad network access**: acceso por red a UI/API desde puestos clínicos autorizados.
-3. **Resource pooling**: uso compartido de recursos cloud entre servicios del sistema.
-4. **Rapid elasticity**: escalar API y capa pública en picos de demanda.
-5. **Measured service**: medir uso para costes, capacidad y optimización operativa.
+URLs:
 
-## 4) Mapeo de actores NIST SP 500-292 e impacto económico
+| Componente | URL |
+|---|---|
+| Shell | http://localhost:5173 |
+| Pantalla publica | http://localhost:5173/pantalla |
+| Auth service | http://localhost:4001 |
+| Queue service | http://localhost:4002 |
+| Calls service | http://localhost:4003 |
 
-Fuente oficial: **NIST SP 500-292** (*Cloud Computing Reference Architecture*):  
-- https://doi.org/10.6028/NIST.SP.500-292  
-- https://www.nist.gov/publications/nist-cloud-computing-reference-architecture
+Tambien se puede arrancar cada servicio con `npm run dev:auth`, `npm run dev:queue`, `npm run dev:calls` y `npm run dev:web`. Los puertos se pueden cambiar con `AUTH_PORT`, `QUEUE_PORT`, `CALLS_PORT` y `QUEUE_URL`. `JWT_SECRET` permite sustituir el valor local de desarrollo.
 
-> Nota terminológica: en NIST el actor es **Cloud Carrier**; en este proyecto se referencia como “**operador**” del transporte/conectividad.
+### Ejecucion con Docker Compose
 
-| Actor NIST | Papel en la arquitectura propuesta | Impacto económico esperado |
-|---|---|---|
-| Consumidor (Cloud Consumer) | Centro de prevención de riesgos laborales de Granada que consume la solución SaaS/PaaS | Pago por uso  |
-| Proveedor (Cloud Provider) | Plataforma cloud que hospeda API, datos y red | Costes variables por cómputo, red y almacenamiento |
-| Intermediario (Cloud Broker) | Agregación/optimización multi-servicio cloud (si aplica) | Optimización de costes y negociación de SLA |
-| Auditor (Cloud Auditor) | Revisión de seguridad, cumplimiento y rendimiento | Reduce riesgo de incumplimiento y costes de incidente |
-| Operador / Carrier | Conectividad segura entre clientes y nube | Coste de comunicaciones y calidad de servicio |
-
-## 5) API REST inicial (resumida)
-
-Especificación inicial de referencia para desarrollo posterior.
-
-| Endpoint | Método | Finalidad | Payload JSON representativo |
-|---|---|---|---|
-| `/api/v1/turnos` | `POST` | Crear turno desde recepción | `{"pacienteRef":"P-001","motivo":"consulta"}` |
-| `/api/v1/turnos` | `GET` | Listar cola/estado de turnos | `{"estado":"en_espera","limit":20}` *(query params)* |
-| `/api/v1/turnos/{id}/llamar` | `POST` | Llamar turno desde operador | `{"operadorId":"op-12","puesto":"box-3"}` |
-| `/api/v1/pantalla/llamadas` | `GET` | Obtener llamadas visibles en pantalla pública | `{"items":[{"codigo":"A-42","puesto":"box-3"}]}` |
-| `/api/v1/auth/login` | `POST` | Inicio de sesión de recepción/operador | `{"usuario":"recepcion1","password":"***"}` |
-
-Nota: la API REST es un diseño inicial y puede evolucionar según necesidades de implementación y seguridad.
-
-## 6) Tecnologías previstas y evolución por hitos
-
-### Tecnologías previstas (no implementadas aún)
-- Frontend modular (alineable con enfoque microfrontend).
-- Backend API REST para dominio de turnos.
-- Base de datos relacional + caché para lectura rápida.
-- Plataforma cloud con servicios gestionados y observabilidad.
-
-### Evolución por hitos
-- **Hito 1:** definición de proyecto, arquitectura de referencia, backlog y configuración GitHub.
-- **Hito 2:** empaquetado cloud-native, entorno local e integración continua.
-- **Hito 3:** IaC y verificación del reconciler pattern.
-- **Hito 4:** despliegue continuo, reconciliación y seguridad.
-- **Hito 5:** observabilidad, carga y release final.
-
-(Referencia de hitos: https://github.com/aaronblanco/CC-26-27/blob/main/hitos/hito1.md)
-
-## 7) Estrategia de ramas y commits
-
-- Rama protegida principal: `main`.
-- Trabajo incremental en ramas `feature/*`.
-- Integración mediante Pull Request con revisión.
-- Convención de commits semánticos: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`.
-
-## 8) Backlog inicial propuesto (para GitHub Issues/Projects)
-
-Enlace al backlog inicial:
-https://github.com/users/aaronblanco/projects/4
-
-## 9) Referencias
-
-- Requisitos de la asignatura y Hito 1: https://github.com/aaronblanco/CC-26-27/blob/main/hitos/hito1.md
-- NIST SP 800-145: https://doi.org/10.6028/NIST.SP.800-145
-- NIST SP 500-292: https://doi.org/10.6028/NIST.SP.500-292
-- Arquitectura de referencia microfrontend (Junta de Andalucía):  
-  https://desarrollo.juntadeandalucia.es/recursos/reglas-pautas/arquitectura-referencia-microfrontend
-- GitHub copilot: Formateo y extensión de README.md, diagramas Mermaid y tablas de backlog.
-
-## 10) Hito 2: entorno Cloud Native local y CI
-
-El Hito 2 empaqueta la aplicación completa como contenedores Docker y permite levantar el
-entorno local mediante un único comando.
-
-### Contenedores
-
-- `services/auth/Dockerfile`: servicio de autenticación.
-- `services/queue/Dockerfile`: servicio de cola y persistencia.
-- `services/calls/Dockerfile`: servicio de llamadas.
-- `frontend/Dockerfile`: frontend React compilado y servido por Nginx.
-
-Las imágenes de producción usan compilaciones multi-stage, dependencias reproducibles,
-imágenes base Alpine y usuarios no root. El servicio de cola persiste sus datos en un
-volumen Docker gestionado.
-
-### Inicio local
-
-Copiar el archivo de ejemplo y, opcionalmente, cambiar el secreto compartido:
-
-```powers
+```powershell
 Copy-Item .env.example .env
 docker compose up --build
 ```
 
-La aplicación queda disponible en `http://localhost:8080`. La ruta
-`http://localhost:8080/pantalla` muestra la pantalla pública.
+La aplicacion completa queda disponible en `http://localhost:8080`; la pantalla publica esta en `http://localhost:8080/pantalla`. Compose levanta cuatro contenedores, usa redes separadas y conserva los turnos en el volumen `queue-data`.
 
-Comandos útiles:
+Comandos utiles:
 
-```powers
-npm test
-npm run test:integration
-npm run build
+```bash
 docker compose ps
 docker compose logs -f
 docker compose down
 docker compose down -v
 ```
 
-El último comando elimina también los datos persistentes de cola.
+El ultimo comando elimina tambien los datos persistentes de cola.
 
-### Integración Continua
+## Usuarios de demostracion
 
-El workflow [.github/workflows/ci.yml](.github/workflows/ci.yml):
+Son credenciales ficticias solo para desarrollo local:
 
-- se ejecuta en `push` y `pull_request` sobre `main`;
-- valida los Dockerfiles con Hadolint;
-- instala dependencias con `npm ci`;
-- ejecuta las pruebas unitarias y la compilación;
-- construye el entorno completo con Compose;
-- ejecuta una prueba integrada real de login, creación de turno, llamada y pantalla pública;
-- publica, solo en `push` a `main`, las cuatro imágenes en GHCR con el SHA del commit y `latest`.
+| Usuario | Contrasena | Rol | Permiso principal |
+|---|---|---|---|
+| `recepcion` | `Recepcion123!` | Recepcion | Crear turnos e imprimir tickets |
+| `operador` | `Operador123!` | Operador | Llamar, repetir y cerrar atenciones |
+| `admin` | `Admin123!` | Administrador | Consultar usuarios y reiniciar datos |
 
-### Actualización de seguridad de Nginx
+El administrador puede reiniciar la cola con `POST /api/queues/reset`. Los datos se guardan en `services/queue/data/queue.json`, se crean al arrancar y estan ignorados por Git.
 
-El frontend usa `nginx:1.30.7-alpine`, parcheado frente a las vulnerabilidades HTTP/2
-CVE-2026-123007 y CVE-2026-123633. Se ejecuta con el usuario `nginx` y reemplaza la
-configuración estándar por una que escucha únicamente en el puerto interno `8080`.
+## Flujo principal
+
+1. Abre la aplicacion y entra como `recepcion`.
+2. Selecciona un servicio, genera un turno y pulsa **Imprimir ticket**.
+3. Abre `/pantalla` en otra pestana y pulsa **Activar audio** una vez para cumplir la politica del navegador.
+4. Cierra sesion, entra como `operador`, selecciona el mismo servicio y llama al siguiente turno.
+5. Comprueba el aviso visual y sonoro en la pantalla publica; despues repite, finaliza o marca ausente.
+
+## Contratos REST principales
+
+Todos los endpoints protegidos usan `Authorization: Bearer <token>`. Los errores siguen `{ "error": "CODIGO", "message": "Descripcion" }`.
+
+| Metodo y ruta | Autorizacion | Peticion | Respuesta |
+|---|---|---|---|
+| `POST /api/auth/login` | Publica | `{ "username": "recepcion", "password": "..." }` | `{ "token": "...", "user": { "role": "recepcion" } }` |
+| `GET /api/services` | Publica | Ninguna | `{ "items": [{ "id": "general", "name": "Medicina general" }] }` |
+| `POST /api/queues/tickets` | Recepcion | `{ "service": "general" }` | `201 { "ticket": { "code": "G-001", "status": "waiting" } }` |
+| `GET /api/queues/tickets?status=waiting` | Recepcion, operador, admin | Ninguna | `{ "items": [...] }` |
+| `POST /api/calls/next` | Operador | `{ "service": "general" }` | `201 { "call": { "code": "G-001" }, "ticket": {...} }` |
+| `POST /api/calls/:id/repeat` | Operador | Ninguna | `201 { "call": {...} }` |
+| `POST /api/calls/:id/finish` | Operador | `{ "status": "completed" }` o `absent` | `{ "ticket": { "status": "completed" } }` |
+| `GET /api/calls/current` | Publica | Ninguna | `{ "current": {...}, "items": [...] }` |
+| `GET /api/calls/events` | Publica | SSE | Eventos `snapshot` y `call` con codigo y destino |
+
+Los estados y transiciones son: `waiting -> called -> completed` o `absent`. El backend rechaza transiciones fuera de ese grafo con HTTP 409. El contador se reinicia por servicio y dia, por lo que `general`, `enfermeria` y `prevencion` tienen ambitos independientes.
+
+
+
+## Pruebas
+
+```bash
+npm ci
+npm test
+npm run build
+npm run test:integration
+```
+
+La prueba unitaria cubre transiciones de estado y permisos. La prueba integrada usa el entorno levantado en Compose y verifica login de recepcion, creación de turno, login de operador, llamada coincidente y disponibilidad de la pantalla pública.
+
+## Integracion Continua
+
+El workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) se ejecuta en `push` y `pull_request` sobre `main`. Valida los Dockerfiles, ejecuta pruebas unitarias y compilación, construye el entorno con Compose y ejecuta el chequeo integrado. En cambios publicados a `main`, publica las cuatro imágenes en GHCR con el SHA del commit y `latest`.
+
+
+
+## Referencias oficiales
+
+Se han consultado la [Arquitectura de referencia Microfrontend](https://desarrollo.juntadeandalucia.es/recursos/reglas-pautas/arquitectura-referencia-microfrontend), la [Guia de desarrollo de soluciones web-microfrontend](https://desarrollo.juntadeandalucia.es/recursos/reglas-pautas/guia-desarrollo-soluciones-web-microfrontend) y la [Norma para el desarrollo de microfrontends](https://desarrollo.juntadeandalucia.es/recursos/reglas-pautas/norma-para-el-desarrollo-microfrontends). La guia tambien enlaza el [tema Bootstrap de la Junta](https://gitlab.juntadeandalucia.es/portal-jjaa/sass-junta-andalucia) y su [CDN de componentes](https://cdn.juntadeandalucia.es/components/docs/).
+Copilot se ha usado para documentación y refactorización de codigo, pero no para la logica de negocio ni la seguridad.
+
+No se ha incorporado ningun logotipo oficial ni identidad grafica autorizada. 
